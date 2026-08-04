@@ -1,0 +1,41 @@
+services:
+  redis:
+    # Redis 8 bundles JSON, Bloom/CMS/Top-K, Time Series, Search AND vector sets.
+    # redis:7-alpine has NONE of these — pinning the major version is not optional here.
+    image: redis:8-alpine
+    container_name: rdp-redis
+    ports:
+      - "6382:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - rdp-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 512m
+
+  api:
+    # Optional: `docker compose --profile api up` runs everything containerised.
+    # The default local loop is Redis here + `uv run uvicorn app.main:app --reload`.
+    profiles: ["api"]
+    build: .
+    container_name: rdp-api
+    ports:
+      - "8800:8000"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    mem_limit: 512m
+
+volumes:
+  rdp-redis-data:

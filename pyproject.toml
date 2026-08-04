@@ -1,0 +1,65 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "redis-data-types-playground"
+version = "0.1.0"
+description = "Every Redis data type, one real use case each, via FastAPI + a CLI"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "redis>=5.2",
+    "structlog>=24.4",
+    "httpx>=0.27",
+    "typer>=0.15",
+    "rich>=13.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "mypy>=1.13",
+    "ruff>=0.8",
+]
+
+[project.scripts]
+rdp = "cli.main:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app", "cli"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+# redis-py ships `execute_command` untyped, and module commands (JSON.*, BF.*, TS.*, VADD…)
+# have to go through it. Nothing in our code can fix that, so the check is disabled exactly
+# where we talk to Redis rather than silenced with 20 inline ignores. Every such call site
+# casts its result to the shape it expects.
+[[tool.mypy.overrides]]
+module = ["app.redis_ops.*", "app.core.client", "app.api.routes.meta"]
+disable_error_code = ["no-untyped-call"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
