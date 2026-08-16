@@ -67,7 +67,7 @@ jobs:
       - name: Checkout the chart repo
         uses: actions/checkout@v4
         with:
-          repository: sany2k8/nrmr-chart
+          repository: sany2k8/fastapi-redis-chart
           token: ${{ secrets.CHART_REPO_TOKEN }}
 
       - name: Point dev at the new image

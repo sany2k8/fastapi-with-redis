@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Query
 from app import demo, reference
 from app.core import keys
 from app.core.client import REQUIRED_MODULES, get_redis, module_names
+from app.core.config import get_settings
 
 router = APIRouter(tags=["0 · Meta"])
 
@@ -36,6 +37,7 @@ async def health(redis: Redis) -> dict[str, Any]:
     modules = await module_names(redis)
     return {
         "status": "ok",
+        "version": get_settings().app_version,
         "redis": "up",
         "modules": sorted(modules),
         "all_types_available": set(REQUIRED_MODULES).issubset(modules),

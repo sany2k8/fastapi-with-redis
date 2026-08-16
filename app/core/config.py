@@ -15,6 +15,10 @@ class Settings(BaseSettings):
 
     app_env: str = "dev"
 
+    # Stamped into the image at build time (Dockerfile ARG/ENV APP_VERSION) so a
+    # running pod can say which build it is. CI passes the git short SHA.
+    app_version: str = "dev"
+
     # Every key this app writes starts with this prefix, which is what makes
     # `POST /demo/reset` able to clean up without touching anything else in the DB.
     key_prefix: str = "rdp"

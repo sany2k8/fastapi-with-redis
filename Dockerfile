@@ -15,6 +15,11 @@ RUN pip install --no-cache-dir \
 COPY app ./app
 COPY cli ./cli
 
+# CI passes --build-arg APP_VERSION=<git short sha>; without this ARG the value
+# is silently dropped and every build reports "dev" at GET /health.
+ARG APP_VERSION=dev
+ENV APP_VERSION=${APP_VERSION}
+
 RUN useradd --uid 10001 --no-create-home --shell /usr/sbin/nologin rdp \
     && chown -R rdp:rdp /srv
 USER rdp

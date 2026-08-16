@@ -26,6 +26,8 @@ services:
       - "8800:8000"
     environment:
       REDIS_HOST: redis
+      # 6379, not 6383: inside the compose network Redis listens on its own
+      # port — 6383 is only the host-side mapping.
       REDIS_PORT: "6379"
     depends_on:
       redis:
