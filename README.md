@@ -8,7 +8,7 @@ which Redis data type is the right model, and why not the other one?"** Every mo
 
 ```bash
 docker compose up -d redis
-uv venv && uv pip install -e ".[dev]"
+uv venv && source .venv/bin/activate && uv pip install -e ".[dev]"
 uv run uvicorn app.main:app --reload --port 8800
 uv run rdp demo
 ```
@@ -16,7 +16,7 @@ uv run rdp demo
 | Service | URL |
 |---|---|
 | API + OpenAPI docs | http://localhost:8800/docs |
-| Redis | `localhost:6382` |
+| Redis | `localhost:6383` |
 
 ---
 
@@ -26,7 +26,7 @@ uv run rdp demo
 flowchart LR
     CLI["rdp CLI<br/>Typer + Rich"] -->|HTTP| API["FastAPI :8800<br/>13 routers"]
     API --> OPS["app/redis_ops/<br/>13 modules — the only place<br/>Redis commands appear"]
-    OPS --> REDIS[("Redis 8 :6382<br/>JSON · Bloom · TimeSeries · VectorSet")]
+    OPS --> REDIS[("Redis 8 :6383<br/>JSON · Bloom · TimeSeries · VectorSet")]
     API -.->|latency middleware| OPS
 ```
 
@@ -61,8 +61,8 @@ sequenceDiagram
 ## Running it
 
 ```bash
-docker compose up -d redis          # Redis 8 on :6382
-uv venv && uv pip install -e ".[dev]"
+docker compose up -d redis          # Redis 8 on :6383
+uv venv && source .venv/bin/activate && uv pip install -e ".[dev]"
 uv run uvicorn app.main:app --reload --port 8800
 ```
 

@@ -10,7 +10,7 @@ import os
 # Must be set before app.core.config is imported anywhere: env vars win over .env.
 os.environ["REDIS_DB"] = "15"
 os.environ.setdefault("REDIS_HOST", "localhost")
-os.environ.setdefault("REDIS_PORT", "6382")
+os.environ.setdefault("REDIS_PORT", "6383")
 os.environ["APP_ENV"] = "test"
 
 from collections.abc import AsyncIterator

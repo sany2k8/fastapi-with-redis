@@ -5,7 +5,7 @@ services:
     image: redis:8-alpine
     container_name: rdp-redis
     ports:
-      - "6382:6379"
+      - "6383:6379"
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - rdp-redis-data:/data

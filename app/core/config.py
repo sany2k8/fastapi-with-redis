@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     redis_host: str = "localhost"
-    redis_port: int = 6382
+    redis_port: int = 6383
     redis_db: int = 0
     redis_password: str | None = None
 
