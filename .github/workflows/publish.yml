@@ -1,0 +1,85 @@
+name: Build and Push to GHCR
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      # The immutable tag the chart will pin to.
+      sha_tag: ${{ steps.vars.outputs.sha_tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Computed here rather than read from metadata-action: that action picks
+      # its `version` output by tag PRIORITY (raw=200 beats sha=100), so it
+      # returns "main" even when the sha tag is listed first.
+      - name: Work out the image tag
+        id: vars
+        run: echo "sha_tag=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # `main` stays as a convenience pointer, but the short SHA is what the
+          # chart pins: a mutable tag gives ArgoCD nothing to notice, so the
+          # cluster would never roll.
+          tags: |
+            type=sha,format=short,prefix=
+            type=raw,value=main,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Surfaces at GET /api/ so you can see which build is live.
+          build-args: |
+            APP_VERSION=${{ steps.vars.outputs.sha_tag }}
+
+  bump-chart:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the chart repo
+        uses: actions/checkout@v4
+        with:
+          repository: sany2k8/nrmr-chart
+          token: ${{ secrets.CHART_REPO_TOKEN }}
+
+      - name: Point dev at the new image
+        env:
+          TAG: ${{ needs.build-and-push.outputs.sha_tag }}
+        run: |
+          yq -i '.app.image.tag = strenv(TAG)' values-dev.yaml
+          git config user.name  "sany2k8"
+          git config user.email "sany2k8@gmail.com"
+          if git diff --quiet; then
+            echo "values-dev.yaml already on $TAG — nothing to do"
+            exit 0
+          fi
+          git commit -am "chore(dev): deploy $TAG"
+          git push
